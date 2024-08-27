@@ -252,3 +252,5 @@ paket-files/
 *.sln.iml
 
 /ReClass.NET/Resources/BuildDate.txt
+
+**/__par_compile_fail

@@ -38,7 +38,11 @@ namespace ReClassNET.CodeGenerator
 
 			[typeof(Vector2Node)] = "Vector2",
 			[typeof(Vector3Node)] = "Vector3",
-			[typeof(Vector4Node)] = "Vector4"
+			[typeof(Vector4Node)] = "Vector4",
+
+			[typeof(Matrix3x3Node)] = "Matrix3x3",
+			[typeof(Matrix3x4Node)] = "Matrix3x4",
+			[typeof(Matrix4x4Node)] = "Matrix4x4"
 		};
 
 		public Language Language => Language.CSharp;
@@ -128,7 +132,7 @@ namespace ReClassNET.CodeGenerator
 			Contract.Requires(writer != null);
 			Contract.Requires(@enum != null);
 
-			writer.Write($"enum {@enum.Name} : ");
+			writer.Write($"public enum {@enum.Name} : ");
 			switch (@enum.Size)
 			{
 				case EnumDescription.UnderlyingTypeSize.OneByte:
@@ -242,12 +246,39 @@ namespace ReClassNET.CodeGenerator
 				return (type, null);
 			}
 
-			return node switch
+			switch (node)
 			{
-				EnumNode enumNode => (enumNode.Enum.Name, null),
-				Utf8TextNode utf8TextNode => ("string", $"[MarshalAs(UnmanagedType.ByValTStr, SizeConst = {utf8TextNode.Length})]"),
-				Utf16TextNode utf16TextNode => (GetUnicodeStringClassName(utf16TextNode.Length), "[MarshalAs(UnmanagedType.Struct)]"),
-				_ => (null, null)
+				case EnumNode enumNode:
+					return (enumNode.Enum.Name, null);
+
+				case Utf8TextNode utf8TextNode:
+					return ("char[]", $"[MarshalAs(UnmanagedType.ByValTStr, SizeConst = {utf8TextNode.Length})]");
+
+				case Utf16TextNode utf16TextNode:
+					return (GetUnicodeStringClassName(utf16TextNode.Length), "[MarshalAs(UnmanagedType.Struct)]");
+
+				case ArrayNode arrayNode:
+					var typeName = GetTypeDefinition(arrayNode.InnerNode).typeName;
+					if (string.IsNullOrEmpty(typeName))
+					{
+						typeName = "byte";
+					}
+
+					return (typeName + "[]", $"[MarshalAs(UnmanagedType.ByValArray, SizeConst = {arrayNode.Count})]");
+
+				case ClassInstanceNode classInstanceNode:
+					var innerNodeName = classInstanceNode.InnerNode.Name;
+					return (innerNodeName, null);
+					var innerNode = GetTypeDefinition(classInstanceNode.InnerNode);
+					var innerNodeType = innerNode.typeName;
+					if (string.IsNullOrEmpty(innerNodeType))
+					{
+						innerNode = (classInstanceNode.Name, null);
+					}
+					return innerNode;
+
+				default:
+					return (null, null);
 			};
 		}
 

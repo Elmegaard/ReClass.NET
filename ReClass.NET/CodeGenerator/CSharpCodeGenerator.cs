@@ -252,7 +252,7 @@ namespace ReClassNET.CodeGenerator
 					return (enumNode.Enum.Name, null);
 
 				case Utf8TextNode utf8TextNode:
-					return ("char[]", $"[MarshalAs(UnmanagedType.ByValTStr, SizeConst = {utf8TextNode.Length})]");
+					return ("char[]", $"[MarshalAs(UnmanagedType.ByValArray, SizeConst = {utf8TextNode.Length})]");
 
 				case Utf16TextNode utf16TextNode:
 					return (GetUnicodeStringClassName(utf16TextNode.Length), "[MarshalAs(UnmanagedType.Struct)]");
